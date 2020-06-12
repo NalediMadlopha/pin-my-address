@@ -20,12 +20,13 @@ android {
 
     signingConfigs {
         release {
-            storeFile file('*******') // Replace '*******' with key store file
-            keyAlias '*******' // Replace'*******' with key alias
-            keyPassword '*******' // Replace'*******' with key password
-            storePassword '*******' // Replace'*******' with store password
-            v1SigningEnabled true
-            v2SigningEnabled true
+//            TODO: Uncomment the code below and replace the asterisks with actual values.
+//            storeFile file('*******') // Replace '*******' with key store file
+//            keyAlias '*******' // Replace'*******' with key alias
+//            keyPassword '*******' // Replace'*******' with key password
+//            storePassword '*******' // Replace'*******' with store password
+//            v1SigningEnabled true
+//            v2SigningEnabled true
         }
     }
 
