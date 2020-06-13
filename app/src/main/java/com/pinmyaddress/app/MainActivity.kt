@@ -61,17 +61,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback,
         huaweiMap = map
 
         currentLatLng?.apply {
-            val cameraPosition = CameraPosition.Builder().target(currentLatLng).zoom(11f).build()
-            cameraUpdate = CameraUpdateFactory.newCameraPosition(cameraPosition)
-
-            huaweiMap?.apply {
-                animateCamera(cameraUpdate)
-                setMaxZoomPreference(20F)
-                setMinZoomPreference(2F)
-                setOnMapClickListener(this@MainActivity)
-                setOnMarkerClickListener(markerListener)
-                setOnMarkerDragListener(markerListener)
-            }
 
             huaweiMap?.addMarker(
                 MarkerOptions().position(currentLatLng)
@@ -86,6 +75,18 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback,
                     .draggable(true)
                     .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_baseline_pin_drop_24))
             )
+
+            val cameraPosition = CameraPosition.Builder().target(currentLatLng).zoom(11f).build()
+            cameraUpdate = CameraUpdateFactory.newCameraPosition(cameraPosition)
+
+            huaweiMap?.apply {
+                animateCamera(cameraUpdate)
+                setMaxZoomPreference(20F)
+                setMinZoomPreference(2F)
+                setOnMapClickListener(this@MainActivity)
+                setOnMarkerClickListener(markerListener)
+                setOnMarkerDragListener(markerListener)
+            }
         }
 
     }

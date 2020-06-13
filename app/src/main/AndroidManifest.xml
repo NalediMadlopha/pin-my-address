@@ -15,7 +15,7 @@
 
         <meta-data
             android:name="com.huawei.hms.client.appid"
-            android:value="appid=@string/app_id">
+            android:value="appid=102373899">
         </meta-data>
 
         <activity
