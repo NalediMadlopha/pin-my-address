@@ -8,6 +8,8 @@ import android.location.LocationManager
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
 import com.huawei.hms.maps.CameraUpdate
 import com.huawei.hms.maps.CameraUpdateFactory
 import com.huawei.hms.maps.HuaweiMap
@@ -30,12 +32,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback,
 
     private var huaweiMap: HuaweiMap? = null
     private var pinMarker: Marker? = null
-    private var currentLatLng: LatLng? = null
-    private lateinit var address: String
+    private var currentLatLng = MutableLiveData<LatLng>()
+    private var address = MutableLiveData<String>()
 
     private lateinit var cameraUpdate: CameraUpdate
 
-    @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -45,10 +46,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback,
             ActivityCompat.requestPermissions(this, runtimePermissions, REQUEST_CODE)
         }
 
-        val locationManager =
-            this.application.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5L, 20F, this)
-
         var mapViewBundle: Bundle? = null
         if (savedInstanceState != null) {
             mapViewBundle = savedInstanceState.getBundle(MAP_VIEW_BUNDLE_KEY)
@@ -57,38 +54,15 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback,
         mapView.getMapAsync(this)
     }
 
+    @SuppressLint("MissingPermission")
     override fun onMapReady(map: HuaweiMap?) {
         huaweiMap = map
 
-        currentLatLng?.apply {
+        val locationManager =
+            this.application.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5L, 20F, this)
 
-            huaweiMap?.addMarker(
-                MarkerOptions().position(currentLatLng)
-                    .title(address)
-                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_baseline_star_24))
-                    .clusterable(true)
-            )
-
-            pinMarker = huaweiMap?.addMarker(
-                MarkerOptions().position(currentLatLng)
-                    .title(address)
-                    .draggable(true)
-                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_baseline_pin_drop_24))
-            )
-
-            val cameraPosition = CameraPosition.Builder().target(currentLatLng).zoom(11f).build()
-            cameraUpdate = CameraUpdateFactory.newCameraPosition(cameraPosition)
-
-            huaweiMap?.apply {
-                animateCamera(cameraUpdate)
-                setMaxZoomPreference(20F)
-                setMinZoomPreference(2F)
-                setOnMapClickListener(this@MainActivity)
-                setOnMarkerClickListener(markerListener)
-                setOnMarkerDragListener(markerListener)
-            }
-        }
-
+        observeCurrentLatLng()
     }
 
     override fun onMapClick(latLng: LatLng) {
@@ -98,7 +72,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback,
             showInfoWindow()
         }
         cameraUpdate.cameraUpdate.newLatLngZoom = NewLatLngZoom(pinMarker?.position, 11f)
-        huaweiMap!!.animateCamera(cameraUpdate)
+        huaweiMap?.animateCamera(cameraUpdate)
     }
 
     override fun onLocationChanged(location: Location) {
@@ -107,9 +81,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback,
         val latitude = location.latitude
         val longitude = location.longitude
 
-        currentLatLng = LatLng(latitude, longitude)
-        address = getAddress(latitude, longitude)
-
+        currentLatLng.value = LatLng(latitude, longitude)
+        address.value = getAddress(latitude, longitude)
     }
 
     override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) { /* no op */ }
@@ -125,27 +98,63 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback,
 
     override fun onStart() {
         super.onStart()
-        mapView!!.onStart()
+        mapView?.onStart()
     }
 
     override fun onStop() {
         super.onStop()
-        mapView!!.onStop()
+        mapView?.onStop()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        mapView!!.onDestroy()
+        mapView?.onDestroy()
     }
 
     override fun onPause() {
-        mapView!!.onPause()
+        mapView?.onPause()
         super.onPause()
     }
 
     override fun onResume() {
         super.onResume()
-        mapView!!.onResume()
+        mapView?.onResume()
+    }
+
+    private fun observeCurrentLatLng() {
+        currentLatLng.observe(this, Observer { currentLatLng ->
+            val cameraPosition = CameraPosition.Builder().target(currentLatLng).zoom(11f).build()
+            cameraUpdate = CameraUpdateFactory.newCameraPosition(cameraPosition)
+
+            huaweiMap?.apply {
+                animateCamera(cameraUpdate)
+                setMaxZoomPreference(20F)
+                setMinZoomPreference(2F)
+                setOnMapClickListener(this@MainActivity)
+                setOnMarkerClickListener(markerListener)
+                setOnMarkerDragListener(markerListener)
+            }
+
+            observeAddress(currentLatLng)
+        })
+    }
+
+    private fun observeAddress(currentLatLng: LatLng?) {
+        address.observe(this, Observer { address ->
+            huaweiMap?.addMarker(
+                MarkerOptions().position(currentLatLng)
+                    .title(address)
+                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_baseline_star_24))
+                    .clusterable(true)
+            )
+
+            pinMarker = huaweiMap?.addMarker(
+                MarkerOptions().position(currentLatLng)
+                    .title(address)
+                    .draggable(true)
+                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_baseline_pin_drop_24))
+            )
+        })
     }
 
 }
